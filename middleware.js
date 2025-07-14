@@ -4,6 +4,9 @@ const path = require('path');
 
 // Custom middleware for user-specific endpoints
 const userMiddleware = (req, res, next) => {
+  // Log incoming requests for debugging
+  console.log(`${req.method} ${req.path}`);
+  
   // Read the database
   const dbPath = path.join(__dirname, 'db.json');
   const db = JSON.parse(fs.readFileSync(dbPath, 'utf8'));

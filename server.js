@@ -7,6 +7,22 @@ const middlewares = jsonServer.defaults();
 // Set default middlewares (logger, static, cors and no-cache)
 server.use(middlewares);
 
+// Health check endpoint
+server.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    endpoints: [
+      '/api/user/:username',
+      '/api/users/:username',
+      '/api/user/email/:email',
+      '/api/user/role/:role',
+      '/api/user/profile/:username',
+      '/api/users/search'
+    ]
+  });
+});
+
 // Add custom middleware for user endpoints
 server.use(userMiddleware);
 
@@ -109,6 +125,8 @@ server.use('/api', router);
 server.use(router);
 
 const port = process.env.PORT || 3000;
-server.listen(port, '0.0.0.0', () => {
-  console.log(`JSON Server is running on port ${port}`);
+const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+server.listen(port, host, () => {
+  console.log(`JSON Server is running on ${host}:${port}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
