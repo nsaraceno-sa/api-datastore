@@ -2,7 +2,9 @@
   "name": "mock-api-server",
   "version": "1.0.0",
   "scripts": {
-    "start": "json-server --watch db.json --host 0.0.0.0 --port $PORT"
+    "start": "json-server --watch db.json --host 0.0.0.0 --port $PORT",
+    "dev": "node server.js",
+    "server": "json-server --watch db.json --routes routes.json --host 0.0.0.0 --port $PORT"
   },
   "dependencies": {
     "json-server": "^0.17.3"

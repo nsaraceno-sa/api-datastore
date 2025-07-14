@@ -1,0 +1,7 @@
+{
+  "/api/users/:username": "/users?username=:username",
+  "/api/users": "/users",
+  "/api/user/:username": "/users?username=:username",
+  "/api/user/email/:email": "/users?emailAddress=:email",
+  "/api/user/role/:role": "/users?primaryRole=:role"
+}
