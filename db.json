@@ -1,0 +1,35 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "XD431834",
+      "userType": "D",
+      "firstName": "ICARX",
+      "lastName": "Test",
+      "emailAddress": "srinivas.palli@nissan-usa.com",
+      "phoneNumber": "615-631-7579",
+      "locale": "en_US",
+      "postalCode": "60654",
+      "primaryRegion": "",
+      "allowedRegions": "",
+      "LMSPersonId": "",
+      "primaryChannelCode": "2",
+      "EID": "",
+      "primaryRole": "Sales",
+      "primaryOtherRoles": "Dealer Test Role",
+      "primarySpecialDesignations": "",
+      "accessLevel": "Manager",
+      "affiliateCode": "Nissan North America",
+      "primaryDealershipCode": "73063",
+      "dealerType": "Franchise",
+      "allowedDealerships": "3225,73063",
+      "primaryDealerPosition": "Service Manager",
+      "primaryNMACDealerCode": "05339",
+      "allowedNMACDealerships": "02194,05339",
+      "UDEF3": "",
+      "UDEF4": "",
+      "UDEF5": ""
+    }
+    // ⬆️ Add more users here if you want
+  ]
+}
