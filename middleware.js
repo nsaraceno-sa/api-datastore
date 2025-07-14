@@ -5,7 +5,8 @@ const path = require('path');
 // Custom middleware for user-specific endpoints
 const userMiddleware = (req, res, next) => {
   // Log incoming requests for debugging
-  console.log(`${req.method} ${req.path}`);
+  const apiKey = req.headers['x-api-key'] || req.headers['api-key'] || req.query.apiKey;
+  console.log(`${req.method} ${req.path} - API Key: ${apiKey ? 'Valid' : 'Missing'}`);
   
   // Read the database
   const dbPath = path.join(__dirname, 'db.json');

@@ -9,6 +9,26 @@ A JSON Server-based API with custom endpoints for user management.
 npm install
 ```
 
+### API Key Setup
+This API requires authentication using an API key.
+
+#### Option 1: Use Default Key (Development)
+The default API key is: `your-default-api-key-2025`
+
+#### Option 2: Generate Secure Key (Recommended)
+```bash
+npm run generate-key
+```
+
+#### Option 3: Set Environment Variable
+```bash
+# Create .env file
+cp .env.example .env
+
+# Set your API key
+API_KEY=your-secure-api-key-here
+```
+
 ### Running the Server
 
 #### Option 1: Basic JSON Server (Default)
@@ -27,6 +47,19 @@ npm run server
 ```
 
 ## API Endpoints
+
+**⚠️ All endpoints require API key authentication (except `/health`)**
+
+### Authentication Methods
+Include your API key in one of these ways:
+- **Header**: `x-api-key: YOUR_API_KEY`
+- **Header**: `api-key: YOUR_API_KEY`
+- **Query Parameter**: `?apiKey=YOUR_API_KEY`
+
+### Health Check (No Auth Required)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Server health check and API information |
 
 ### Basic JSON Server Endpoints
 
@@ -69,53 +102,91 @@ npm run server
 
 ### Example Usage
 
-#### Get User by Username (Primary Identifier)
+#### Check API Health (No Auth Required)
 ```bash
-curl -X GET http://localhost:3000/api/user/AB123456
+curl -X GET http://localhost:3000/health
 ```
 
-#### Get User by Username (Alternative Route)
+#### Get User by Username (Header Auth)
 ```bash
-curl -X GET http://localhost:3000/api/users/CD789012
+curl -X GET http://localhost:3000/api/user/AB123456 \
+  -H "x-api-key: your-default-api-key-2025"
+```
+
+#### Get User by Username (Query Parameter Auth)
+```bash
+curl -X GET "http://localhost:3000/api/user/AB123456?apiKey=your-default-api-key-2025"
+```
+
+#### Get User by Username (Alternative Header)
+```bash
+curl -X GET http://localhost:3000/api/users/CD789012 \
+  -H "api-key: your-default-api-key-2025"
 ```
 
 #### Get User by Email
 ```bash
-curl -X GET http://localhost:3000/api/user/email/jane.doe@nissan-usa.com
+curl -X GET http://localhost:3000/api/user/email/jane.doe@nissan-usa.com \
+  -H "x-api-key: your-default-api-key-2025"
 ```
 
 #### Get Users by Role
 ```bash
-curl -X GET http://localhost:3000/api/user/role/Sales
+curl -X GET http://localhost:3000/api/user/role/Sales \
+  -H "x-api-key: your-default-api-key-2025"
 ```
 
 #### Get User Profile by Username (Limited Fields)
 ```bash
-curl -X GET http://localhost:3000/api/user/profile/XD431834
+curl -X GET http://localhost:3000/api/user/profile/XD431834 \
+  -H "x-api-key: your-default-api-key-2025"
 ```
 
 #### Update User by Username
 ```bash
 curl -X PUT http://localhost:3000/api/users/AB123456 \
   -H "Content-Type: application/json" \
+  -H "x-api-key: your-default-api-key-2025" \
   -d '{"firstName": "Jonathan", "accessLevel": "SuperAdmin"}'
 ```
 
 #### Delete User by Username
 ```bash
-curl -X DELETE http://localhost:3000/api/users/AB123456
+curl -X DELETE http://localhost:3000/api/users/AB123456 \
+  -H "x-api-key: your-default-api-key-2025"
 ```
 
 #### Search Users
 ```bash
 # Search by name
-curl -X GET "http://localhost:3000/api/users/search?q=john"
+curl -X GET "http://localhost:3000/api/users/search?q=john" \
+  -H "x-api-key: your-default-api-key-2025"
 
 # Search by multiple criteria
-curl -X GET "http://localhost:3000/api/users/search?role=Sales&userType=D"
+curl -X GET "http://localhost:3000/api/users/search?role=Sales&userType=D" \
+  -H "x-api-key: your-default-api-key-2025"
 
 # Search with access level
-curl -X GET "http://localhost:3000/api/users/search?accessLevel=Admin"
+curl -X GET "http://localhost:3000/api/users/search?accessLevel=Admin" \
+  -H "x-api-key: your-default-api-key-2025"
+```
+
+## Authentication Errors
+
+### 401 Unauthorized (Missing API Key)
+```json
+{
+  "error": "API key is required",
+  "message": "Please provide an API key in the x-api-key header or apiKey query parameter"
+}
+```
+
+### 403 Forbidden (Invalid API Key)
+```json
+{
+  "error": "Invalid API key",
+  "message": "The provided API key is not valid"
+}
 ```
 
 ## JSON Server Query Parameters

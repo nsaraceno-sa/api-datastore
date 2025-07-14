@@ -4,14 +4,53 @@ const server = jsonServer.create();
 const router = jsonServer.router('db.json');
 const middlewares = jsonServer.defaults();
 
+// API Key configuration
+const API_KEY = process.env.API_KEY || 'your-default-api-key-2025';
+
+// API Key authentication middleware
+const authenticateApiKey = (req, res, next) => {
+  // Skip authentication for health check
+  if (req.path === '/health') {
+    return next();
+  }
+  
+  // Check for API key in headers
+  const providedApiKey = req.headers['x-api-key'] || req.headers['api-key'] || req.query.apiKey;
+  
+  if (!providedApiKey) {
+    return res.status(401).json({
+      error: 'API key is required',
+      message: 'Please provide an API key in the x-api-key header or apiKey query parameter'
+    });
+  }
+  
+  if (providedApiKey !== API_KEY) {
+    return res.status(403).json({
+      error: 'Invalid API key',
+      message: 'The provided API key is not valid'
+    });
+  }
+  
+  next();
+};
+
 // Set default middlewares (logger, static, cors and no-cache)
 server.use(middlewares);
+
+// Apply API key authentication to all routes except health check
+server.use(authenticateApiKey);
 
 // Health check endpoint
 server.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
+    authentication: 'API key required for all endpoints except /health',
+    apiKeyMethods: [
+      'Header: x-api-key',
+      'Header: api-key', 
+      'Query parameter: apiKey'
+    ],
     endpoints: [
       '/api/user/:username',
       '/api/users/:username',

@@ -31,9 +31,21 @@ git push origin main
 - **Start Command**: `npm start` (this will use our custom server)
 
 ### 4. Environment Variables
-No special environment variables are needed. The app will automatically use:
-- `PORT`: Automatically provided by Render.com
-- `NODE_ENV`: Set to `production` by Render.com
+Set up your API key as an environment variable:
+
+**Option 1: Use Render.com Dashboard**
+1. Go to your service settings
+2. Add environment variable: `API_KEY` = `your-secure-api-key-here`
+
+**Option 2: Use render.yaml**
+The render.yaml file will automatically set NODE_ENV to production.
+You can add your API key there or set it in the dashboard.
+
+**Generate a secure API key:**
+```bash
+# Run this locally to generate a secure key
+npm run generate-key
+```
 
 ### 5. Deploy
 Click "Create Web Service" and wait for the deployment to complete.
@@ -45,17 +57,20 @@ Once deployed, your API will be available at:
 
 ### Test Endpoints:
 ```bash
-# Health check
+# Health check (no auth required)
 curl https://your-service-name.onrender.com/health
 
-# Get user by username
-curl https://your-service-name.onrender.com/api/user/AB123456
+# Get user by username (with API key)
+curl https://your-service-name.onrender.com/api/user/AB123456 \
+  -H "x-api-key: YOUR_API_KEY"
 
 # Get user profile
-curl https://your-service-name.onrender.com/api/user/profile/XD431834
+curl https://your-service-name.onrender.com/api/user/profile/XD431834 \
+  -H "x-api-key: YOUR_API_KEY"
 
 # Search users
-curl "https://your-service-name.onrender.com/api/users/search?role=Sales"
+curl "https://your-service-name.onrender.com/api/users/search?role=Sales" \
+  -H "x-api-key: YOUR_API_KEY"
 ```
 
 ## Troubleshooting
