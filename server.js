@@ -1,5 +1,7 @@
 const jsonServer = require('json-server');
 const userMiddleware = require('./middleware');
+const jwt = require('jsonwebtoken');
+const jwksClient = require('jwks-client');
 const server = jsonServer.create();
 const router = jsonServer.router('db.json');
 const middlewares = jsonServer.defaults();
@@ -7,31 +9,94 @@ const middlewares = jsonServer.defaults();
 // API Key configuration
 const API_KEY = process.env.API_KEY || 'your-default-api-key-2025';
 
-// API Key authentication middleware
-const authenticateApiKey = (req, res, next) => {
+// OIDC Configuration
+const OIDC_ISSUER = 'https://us-services.dev.secureauth.com/oauth'; // e.g., 'https://your-oidc-provider.com'
+const OIDC_AUDIENCE = '4e45a1c2-6d94-4dd0-b48f-9061de8f4e0a'; // e.g., 'your-audience-id'
+// Initialize JWK client if OIDC is configured
+let jwksClientInstance = jwksClient({
+  jwksUri: `${OIDC_ISSUER}/jwks`,
+  requestHeaders: {}, // Optional
+  timeout: 30000, // Defaults to 30s
+  cache: true,
+  cacheMaxEntries: 5,
+  cacheMaxAge: 600000, // 10 minutes
+});
+
+// Function to get signing key from JWK
+const getKey = (header, callback) => {
+  jwksClientInstance.getSigningKey(header.kid, (err, key) => {
+    if (err) {
+      return callback(err);
+    }
+    const signingKey = key.publicKey || key.rsaPublicKey;
+    callback(null, signingKey);
+  });
+};
+
+// Function to verify JWT token
+const verifyJwtToken = (token) => {
+  return new Promise((resolve, reject) => {
+    jwt.verify(token, getKey, {
+      audience: OIDC_AUDIENCE,
+      issuer: OIDC_ISSUER,
+      algorithms: ['RS256']
+    }, (err, decoded) => {
+      if (err) {
+        return reject(err);
+      }
+      resolve(decoded);
+    });
+  });
+};
+
+// Authentication middleware (supports API Key and JWT validation)
+const authenticateApiKey = async (req, res, next) => {
   // Skip authentication for health check
   if (req.path === '/health') {
     return next();
   }
   
-  // Check for API key in headers
+// Check for API key in headers or query parameter
   const providedApiKey = req.headers['x-api-key'] || req.headers['api-key'] || req.query.apiKey;
+  const authHeader = req.headers.authorization;
+
+  if (providedApiKey && providedApiKey === API_KEY) {    
+    // Check for Bearer token in Authorization header
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const providedToken = authHeader.substring(7); // Remove 'Bearer ' prefix
+        
+      try {
+        const decoded = await verifyJwtToken(providedToken);
+        // Add decoded JWT payload to request for use in routes
+        req.user = decoded;
+        return next();
+      } catch (jwtError) {
+        console.log('JWT verification failed:', jwtError.message);
+        return res.status(401).json({
+          error: 'Invalid JWT token',
+          message: jwtError.message
+        });
+      }
+    } else{            
+        return res.status(401).json({
+          error: 'Authentication required',
+          message: 'Please provide both, an API key (x-api-key header or apiKey query parameter) and JWT Bearer token (Authorization header)'
+        });      
+    }
+  }
   
-  if (!providedApiKey) {
+  // If no valid authentication method found
+  if (!providedApiKey && !authHeader) {
     return res.status(401).json({
-      error: 'API key is required',
-      message: 'Please provide an API key in the x-api-key header or apiKey query parameter'
+      error: 'Authentication required',
+      message: 'Please provide both, an API key (x-api-key header or apiKey query parameter) and JWT Bearer token (Authorization header)'
     });
   }
   
-  if (providedApiKey !== API_KEY) {
-    return res.status(403).json({
-      error: 'Invalid API key',
-      message: 'The provided API key is not valid'
-    });
-  }
-  
-  next();
+  return res.status(403).json({
+    error: 'Invalid authentication',
+    message: 'The provided API key or JWT token is not valid'
+  });
 };
 
 // Set default middlewares (logger, static, cors and no-cache)
@@ -42,15 +107,28 @@ server.use(authenticateApiKey);
 
 // Health check endpoint
 server.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    authentication: 'API key required for all endpoints except /health',
-    apiKeyMethods: [
+  const authMethods = {
+    'API Key': [
       'Header: x-api-key',
       'Header: api-key', 
       'Query parameter: apiKey'
     ],
+    'JWT Bearer Token': [
+      'Header: Authorization: Bearer <token>'
+    ]
+  };
+
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    authentication: 'API key AND JWT token required for all endpoints except /health',
+    authenticationMethods: authMethods,
+    oidcConfiguration: {
+      issuer: OIDC_ISSUER,
+      audience: OIDC_AUDIENCE,
+      algorithms: ['RS256'],
+      jwksUri: `${OIDC_ISSUER}/jwks`
+    },
     endpoints: [
       '/api/user/:username',
       '/api/users/:username',
