@@ -15,7 +15,7 @@ const userMiddleware = (req, res, next) => {
   // Custom endpoint: Get user by username (primary identifier)
   if (req.path.match(/^\/api\/user\/([^\/]+)$/) && !req.path.includes('/email/') && !req.path.includes('/role/') && !req.path.includes('/profile/')) {
     const username = req.path.split('/').pop();
-    const user = db.users.find(u => u.username === username);
+    const user = db.users.find(u => u.username.toLowerCase() === username.toLowerCase());
     
     if (user) {
       return res.json(user);
@@ -27,8 +27,8 @@ const userMiddleware = (req, res, next) => {
   // Custom endpoint: Get user by email
   if (req.path.match(/^\/api\/user\/email\/(.+)$/)) {
     const email = req.path.split('/').pop();
-    const user = db.users.find(u => u.emailAddress === email);
-    
+    const user = db.users.find(u => u.emailAddress.toLowerCase() === email.toLowerCase());
+
     if (user) {
       return res.json(user);
     } else {
